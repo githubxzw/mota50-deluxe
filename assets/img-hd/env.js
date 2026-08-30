@@ -1,0 +1,2 @@
+/* 精修环境图集清单（由 tools/gen_art.py 生成） */
+window.MOTA_ENV = {"cell": 96, "cols": 8, "index": {"ground0": 0, "ground1": 1, "ground2": 2, "ground3": 3, "yellowWall": 4, "yellowWall2": 5, "whiteWall2": 6, "blueWall2": 7, "blockWall": 8, "grayWall": 9, "unbreakableWall": 10, "fakeWall": 11, "fakeWall2": 12, "yellowDoor": 13, "blueDoor": 14, "redDoor": 15, "specialDoor": 16, "steelDoor": 17, "upFloor": 18, "downFloor": 19, "blueShop-left": 20, "blueShop-right": 21, "pinkShop-left": 22, "pinkShop-right": 23}};

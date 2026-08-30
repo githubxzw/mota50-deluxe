@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0b14">
+<title>魔塔50层 · 精修版</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
+<link rel="stylesheet" href="style.css?v=3.3">
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🏰 魔塔50层<span class="ver"></span></h1>
+    <div class="floor-badge">第 <b id="floorNo">1</b> 层</div>
+    <div class="spacer"></div>
+    <button id="btnBook" title="怪物手册（X）">📖 手册</button>
+    <button id="btnToolbox" title="工具箱（T）">🎒 工具</button>
+    <button id="btnFly" title="楼传（F）">🪄 楼传</button>
+    <button id="btnHelp">❔ 帮助</button>
+    <button id="btnReset" class="ghost">↺</button>
+  </header>
+  <main>
+    <div id="stage">
+      <canvas id="cv" width="832" height="832"></canvas>
+      <div id="dlg" class="hidden">
+        <canvas id="dlgFace" width="96" height="96"></canvas>
+        <div class="dlg-body">
+          <div id="dlgName"></div>
+          <div id="dlgText"></div>
+        </div>
+        <div id="dlgNext">▼ 点击继续</div>
+      </div>
+    </div>
+    <div id="panel">
+      <div class="hero-card">
+        <canvas id="heroCv" width="64" height="96"></canvas>
+        <div class="hero-info">
+          <div class="hero-name">勇者</div>
+          <div class="hero-floor">第 <b id="pFloor">1</b> 层</div>
+        </div>
+      </div>
+      <div class="card stats">
+        <div class="stat hp"><span class="ico">❤</span><span class="lab">生命</span><span class="val" id="stHp">1000</span></div>
+        <div class="stat atk"><span class="ico">⚔</span><span class="lab">攻击</span><span class="val" id="stAtk">100</span></div>
+        <div class="stat def"><span class="ico">🛡</span><span class="lab">防御</span><span class="val" id="stDef">100</span></div>
+        <div class="stat money"><span class="ico">✦</span><span class="lab">金币</span><span class="val" id="stMoney">0</span></div>
+      </div>
+      <div class="card keys">
+        <div class="key"><canvas class="kicon" id="kIconY" width="32" height="32"></canvas><b id="stKy">0</b></div>
+        <div class="key"><canvas class="kicon" id="kIconB" width="32" height="32"></canvas><b id="stKb">0</b></div>
+        <div class="key"><canvas class="kicon" id="kIconR" width="32" height="32"></canvas><b id="stKr">0</b></div>
+        <div class="misc"><span>击杀 <b id="stKills">0</b></span><span>步数 <b id="stSteps">0</b></span></div>
+      </div>
+      <div class="card relics-card">
+        <h3>圣 物</h3>
+        <div class="relics" id="stRelics"><span class="dim">（暂无）</span></div>
+      </div>
+      <div id="log"></div>
+    </div>
+  </main>
+</div>
+
+<div id="dpad">
+  <button class="up" data-d="0,-1">▲</button>
+  <button class="left" data-d="-1,0">◀</button>
+  <button class="down" data-d="0,1">▼</button>
+  <button class="right" data-d="1,0">▶</button>
+</div>
+
+<div id="modal" class="hidden"><div id="modalBox"></div></div>
+
+<script src="mota-data.js?v=3.3"></script>
+<script src="assets/img-hd/env.js?v=3.3"></script>
+<script src="mota.js?v=3.3"></script>
+<script src="game.js?v=3.3"></script>
+</body>
+</html>
