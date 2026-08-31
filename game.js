@@ -30,7 +30,7 @@ let shakeFx = null;            // 画面震动 {t0,mag}
 
 /* ---------------- 素材加载 ---------------- */
 const IMG_DIR = 'assets/img-hd/';
-const ASSET_VER = '3.4';   // 与 index.html 资源版本保持一致，破缓存
+const ASSET_VER = '3.5';   // 与 index.html 资源版本保持一致，破缓存
 function loadImg(src) {
   return new Promise((res, rej) => {
     const im = new Image();
