@@ -334,4 +334,8 @@ if __name__ == '__main__':
     enhance_atlas('dragon', 96, scale=2)
     print('== 2) 环境精修贴图 ==')
     build_env()
+    print('== 3) NPC / 勇者专属精绘（覆盖通用增强） ==')
+    import runpy
+    runpy.run_path(os.path.join(ROOT, 'tools', 'gen_npcs.py'), run_name='__main__')
+    runpy.run_path(os.path.join(ROOT, 'tools', 'gen_hero_pixel.py'), run_name='__main__')
     print('完成 →', OUT)

@@ -1,3 +1,2 @@
-.DS_Store
-_shots/
-*.log
+__pycache__/
+*.pyc
