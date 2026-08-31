@@ -30,7 +30,7 @@ let shakeFx = null;            // 画面震动 {t0,mag}
 
 /* ---------------- 素材加载 ---------------- */
 const IMG_DIR = 'assets/img-hd/';
-const ASSET_VER = '3.3';   // 与 index.html 资源版本保持一致，破缓存
+const ASSET_VER = '3.4';   // 与 index.html 资源版本保持一致，破缓存
 function loadImg(src) {
   return new Promise((res, rej) => {
     const im = new Image();
@@ -40,11 +40,27 @@ function loadImg(src) {
   });
 }
 let ENV_BY_NAME = {};
+/* 皮肤清单（hero 为默认勇者；其余为火影系列） */
+const SKINS = [
+  { id: 'hero', name: '经典勇者', desc: '原版蓝甲小战士' },
+  { id: 'naruto', name: '漩涡鸣人', desc: '木叶橙 + 金色尖发 + 护额' },
+  { id: 'sasuke', name: '宇智波佐助', desc: '宇智波蓝 + 鸦羽黑发' },
+  { id: 'kakashi', name: '旗木卡卡西', desc: '上忍绿 + 银发 + 面罩' },
+  { id: 'lee', name: '洛克·李', desc: '体术绿衣 + 西瓜头 + 橙护腿' },
+  { id: 'gaara', name: '我爱罗', desc: '砂隐红袍 + 爱之额印' },
+  { id: 'hinata', name: '日向雏田', desc: '淡紫外套 + 姬发式蓝发' },
+];
+function heroSheet() {
+  return atlases['hero' + (state && state.skin && state.skin !== 'hero' ? '_' + state.skin : '')] || atlases.hero;
+}
 async function loadAssets() {
   const names = ['enemys', 'terrains', 'animates', 'npcs', 'items', 'npc48', 'enemy48'];
   const imgs = await Promise.all(names.map(n => loadImg(IMG_DIR + n + '.png')));
   names.forEach((n, i) => atlases[n] = imgs[i]);
-  atlases.hero = await loadImg(IMG_DIR + 'hero.png');
+  // 勇者 + 全部皮肤（dragon 由 enemys 索引引用，仍需加载）
+  const heroIds = SKINS.map(sk => 'hero' + (sk.id === 'hero' ? '' : '_' + sk.id));
+  const heroImgs = await Promise.all(heroIds.map(n => loadImg(IMG_DIR + n + '.png')));
+  heroIds.forEach((n, i) => atlases[n] = heroImgs[i]);
   atlases.dragon = await loadImg(IMG_DIR + 'dragon.png');
   atlases.env = await loadImg(IMG_DIR + 'env.png');
   if (window.MOTA_ENV) {
@@ -373,8 +389,8 @@ function drawHeroSprite() {
     if (frame === 2) frame = 0;
   }
   drawShadow(state.x, state.y, 1);
-  // HD hero 图集：每格 96
-  ctx.drawImage(atlases.hero, frame * 96, row * 96, 96, 96, px, py, TILE, TILE);
+  // 当前皮肤图集：每格 96
+  ctx.drawImage(heroSheet(), frame * 96, row * 96, 96, 96, px, py, TILE, TILE);
 }
 
 /* ---------------- UI 基础 ---------------- */
@@ -904,6 +920,134 @@ function showVictory(te) {
     '<div class="btns"><button class="primary" onclick="restartGame()">再来一次</button></div>');
   logMsg('🎉 通关！');
 }
+/* ---------------- 多存档位系统 ---------------- */
+const SLOT_PREFIX = 'mota50_deluxe_slot_';
+const SLOT_COUNT = 3;
+function slotKey(i) { return SLOT_PREFIX + i; }
+function slotInfo(i) {
+  try {
+    const j = localStorage.getItem(slotKey(i));
+    if (!j) return null;
+    const s = JSON.parse(j);
+    return {
+      floor: M.floorIndex(s.floor), hp: s.hp, atk: s.atk, def: s.def,
+      money: s.money, kills: s.kills, steps: s.steps,
+      skin: s.skin || 'hero', win: !!s.win,
+      time: s.savedAt ? new Date(s.savedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
+    };
+  } catch (e) { return null; }
+}
+function saveToSlot(i) {
+  state.savedAt = Date.now();
+  try { localStorage.setItem(slotKey(i), M.serialize(state)); return true; } catch (e) { return false; }
+}
+function loadFromSlot(i) {
+  try {
+    const j = localStorage.getItem(slotKey(i));
+    if (!j) return false;
+    const s = M.deserialize(j);
+    if (!s) return false;
+    state = s;
+    stopWalk(); queue = []; runner = null;
+    _animFloor = null;
+    drawHeroPanel();   // 侧栏头像跟随存档中的皮肤
+    updatePanel(); draw(); save();
+    logMsg('读档成功：第 ' + M.floorIndex(state.floor) + ' 层');
+    return true;
+  } catch (e) { return false; }
+}
+function skinNameOf(id) {
+  const sk = SKINS.find(k => k.id === id);
+  return sk ? sk.name : '经典勇者';
+}
+
+function openSaveModal() {
+  let rows = '';
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const info = slotInfo(i);
+    rows += '<div class="slot-row">' +
+      '<span class="slot-no">槽位 ' + (i + 1) + '</span>' +
+      (info
+        ? '<span class="slot-sum ' + (info.win ? 'win' : '') + '">' +
+          (info.win ? '🏆已通关' : '第' + info.floor + '层') + ' · 血' + info.hp + ' 攻' + info.atk + ' 防' + info.def +
+          ' · ' + skinNameOf(info.skin) + (info.time ? ' · ' + info.time : '') + '</span>' +
+          '<button class="primary" onclick="doSaveSlot(' + i + ')">覆盖保存</button>' +
+          '<button onclick="doLoadSlot(' + i + ')">读取</button>'
+        : '<span class="slot-sum dim">（空）</span>' +
+          '<button class="primary" onclick="doSaveSlot(' + i + ')">保存</button>') +
+      '</div>';
+  }
+  rows += '<div class="desc dim" style="font-size:12px;text-align:center;margin-top:8px">另外：游戏每一步都会自动保存（关闭页面也能继续）</div>';
+  openModal('<h2>💾 存档</h2>' + rows +
+    '<div class="btns"><button onclick="closeModal()">关闭</button></div>');
+}
+function openLoadModal() {
+  let rows = '';
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const info = slotInfo(i);
+    rows += '<div class="slot-row">' +
+      '<span class="slot-no">槽位 ' + (i + 1) + '</span>' +
+      (info
+        ? '<span class="slot-sum ' + (info.win ? 'win' : '') + '">' +
+          (info.win ? '🏆已通关' : '第' + info.floor + '层') + ' · 血' + info.hp + ' 攻' + info.atk + ' 防' + info.def +
+          ' · ' + skinNameOf(info.skin) + (info.time ? ' · ' + info.time : '') + '</span>' +
+          '<button class="primary" onclick="doLoadSlot(' + i + ')">读取</button>'
+        : '<span class="slot-sum dim">（空）</span>') +
+      '</div>';
+  }
+  openModal('<h2>📂 读档</h2>' + rows +
+    '<div class="btns"><button onclick="closeModal()">关闭</button></div>');
+}
+window.doSaveSlot = function (i) {
+  if (saveToSlot(i)) { sfx('item'); logMsg('已保存到槽位 ' + (i + 1)); }
+  openSaveModal();
+};
+window.doLoadSlot = function (i) {
+  if (loadFromSlot(i)) {
+    sfx('stairs');
+    closeModal();
+    fadeFx = { t0: performance.now() };
+  } else {
+    logMsg('读档失败', 'warn');
+  }
+};
+
+/* ---------------- 皮肤衣柜 ---------------- */
+function openWardrobe() {
+  let rows = '';
+  for (const sk of SKINS) {
+    const cur = (state.skin || 'hero') === sk.id;
+    const cell = atlasCell('npcs', 'hero') ? null : null; // 头像用皮肤图集
+    rows += '<div class="skin-row' + (cur ? ' current' : '') + '">' +
+      '<canvas class="skin-face" data-skin="' + sk.id + '" width="96" height="96"></canvas>' +
+      '<span class="skin-info"><b>' + sk.name + '</b>' +
+      '<small>' + sk.desc + '</small></span>' +
+      (cur ? '<span class="skin-on">穿着中</span>'
+           : '<button class="primary" onclick="wearSkin(\'' + sk.id + '\')">换上</button>') +
+      '</div>';
+  }
+  openModal('<h2>👘 勇者衣柜</h2><div class="skin-grid">' + rows + '</div>' +
+    '<div class="btns"><button onclick="closeModal()">关闭</button></div>');
+  // 填充头像
+  document.querySelectorAll('#modalBox .skin-face').forEach(cv => {
+    const g = cv.getContext('2d');
+    g.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in g) g.imageSmoothingQuality = 'high';
+    const sid = cv.dataset.skin;
+    const img = atlases['hero' + (sid === 'hero' ? '' : '_' + sid)];
+    if (img) g.drawImage(img, 0, 0, 96, 96, 0, 0, 96, 96);
+  });
+}
+window.wearSkin = function (sid) {
+  state.skin = sid;
+  sfx('item');
+  logMsg('换上皮肤「' + skinNameOf(sid) + '」');
+  drawHeroPanel();
+  draw();
+  save();
+  openWardrobe();
+};
+
 window.restartGame = function () {
   state = M.createState();
   localStorage.removeItem(SAVE_KEY);
@@ -1178,7 +1322,10 @@ function stopWalk() {
 
 /* ---------------- 存档 ---------------- */
 function save() {
-  try { localStorage.setItem(SAVE_KEY, M.serialize(state)); } catch (e) {}
+  try {
+    state.savedAt = Date.now();
+    localStorage.setItem(SAVE_KEY, M.serialize(state));
+  } catch (e) {}
 }
 function loadSave() {
   try {
@@ -1211,6 +1358,9 @@ window.addEventListener('keydown', e => {
     case 'x': case 'X': openBook(); break;
     case 't': case 'T': openToolbox(); break;
     case 'f': case 'F': openFly(); break;
+    case 'k': case 'K': openSaveModal(); break;
+    case 'l': case 'L': openLoadModal(); break;
+    case 'c': case 'C': openWardrobe(); break;
   }
 });
 /* 手机方向键：点按一步，长按连续移动 */
@@ -1253,6 +1403,9 @@ $('btnBook').onclick = openBook;
 $('btnToolbox').onclick = openToolbox;
 $('btnFly').onclick = openFly;
 $('btnHelp').onclick = showHelp;
+$('btnSave').onclick = openSaveModal;
+$('btnLoad').onclick = openLoadModal;
+$('btnWardrobe').onclick = openWardrobe;
 $('btnReset').onclick = () => {
   openModal('<h2>重新开始？</h2><div class="desc">将清空当前存档，从第1层重新开始。确定吗？</div>' +
     '<div class="btns"><button onclick="closeModal()">取消</button>' +
@@ -1266,7 +1419,8 @@ function showHelp() {
     '<div class="desc">' +
     '🗡 方向键 / WASD 移动，空格与相邻 NPC 对话<br>' +
     '🖱 点击地面自动寻路，点击怪物战斗<br>' +
-    '📜 X 怪物手册 · 🎒 T 工具箱 · 🪄 F 楼传<br><br>' +
+    '📜 X 怪物手册 · 🎒 T 工具箱 · 🪄 F 楼传<br>' +
+    '💾 K 存档 · 📂 L 读档 · 👘 C 衣柜（换肤）<br>' +
     '<b style="color:var(--gold)">原版提示</b>\n' +
     '· 每 10 层为一个区域，击败区域头目才能继续上楼\n' +
     '· 宝石与血瓶的数值随区域倍增（2区×2 … 5区×5）\n' +
@@ -1286,7 +1440,8 @@ function drawHeroPanel() {
   g.imageSmoothingEnabled = true;
   if ('imageSmoothingQuality' in g) g.imageSmoothingQuality = 'high';
   g.clearRect(0, 0, 64, 96);
-  if (atlases.hero) g.drawImage(atlases.hero, 0, 0, 96, 96, 0, 16, 64, 64);
+  const hs = heroSheet();
+  if (hs) g.drawImage(hs, 0, 0, 96, 96, 0, 16, 64, 64);
 }
 function drawKeyIcons() {
   const map = [['kIconY', 'yellowKey'], ['kIconB', 'blueKey'], ['kIconR', 'redKey']];

@@ -336,3 +336,46 @@ main { flex: 1; display: flex; gap: 14px; padding: 14px; min-height: 0; justify-
   .book-row .bn { width: 58px; }
   .book-row .bs { font-size: 11.5px; }
 }
+
+/* ---------------- 存档槽位 ---------------- */
+.slot-row {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 12px; margin: 7px 0;
+}
+.slot-no { font-weight: 700; color: var(--gold2); flex: none; font-size: 13px; }
+.slot-sum { flex: 1; font-size: 12.5px; color: var(--text); min-width: 0; }
+.slot-sum.win { color: var(--gold); }
+.slot-row button { padding: 7px 12px; font-size: 12.5px; flex: none; }
+
+/* ---------------- 皮肤衣柜 ---------------- */
+.skin-grid { display: flex; flex-direction: column; gap: 8px; }
+.skin-row {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid var(--line);
+  border-radius: 12px; padding: 8px 12px;
+}
+.skin-row.current { border-color: rgba(240, 201, 72, .5); background: rgba(240, 201, 72, .07); }
+.skin-face {
+  width: 56px; height: 56px; flex: none;
+  image-rendering: pixelated;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .25);
+  border: 1px solid var(--line2);
+}
+.skin-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.skin-info b { font-size: 14.5px; color: var(--text); }
+.skin-info small { font-size: 11.5px; color: var(--dim); }
+.skin-on {
+  color: var(--gold); font-size: 13px; font-weight: 700; flex: none;
+  text-shadow: 0 0 12px rgba(240, 201, 72, .4);
+}
+.skin-row button { flex: none; padding: 8px 16px; }
+
+@media (max-width: 560px) {
+  .skin-face { width: 46px; height: 46px; }
+  .slot-row { flex-wrap: wrap; }
+  .slot-sum { flex-basis: 100%; order: -1; }
+}

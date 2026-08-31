@@ -50,6 +50,7 @@
       items: {},        // 工具/圣物计数
       flags: {},        // 剧情与机关旗标
       introDone: false, // 3F 剧情后属性重置
+      skin: 'hero',     // 勇者皮肤（衣柜更换）
       floors: floors,
       steps: 0, kills: 0,
       win: false, te: false,
@@ -720,6 +721,7 @@
       for (const F of D.floors) {
         if (!s.floors[F.id]) s.floors[F.id] = { killed: {}, picked: {}, opened: {}, done: {}, blocks: {}, override: null };
       }
+      if (!s.skin) s.skin = 'hero'; // 旧存档迁移
       return s;
     } catch (e) { return null; }
   }
